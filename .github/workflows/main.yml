@@ -1,0 +1,47 @@
+name: Deploy CloudFormation
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name demo-stack \
+            --template-file templates/main.yaml
+
+      - name: Verify S3 bucket
+        run: |
+          BUCKET=$(aws cloudformation describe-stacks \
+            --stack-name demo-stack \
+            --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
+            --output text)
+
+          aws s3 ls s3://$BUCKET
+
+      - name: Verify EC2 instance
+        run: |
+          INSTANCE=$(aws cloudformation describe-stacks \
+            --stack-name demo-stack \
+            --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" \
+            --output text)
+
+          aws ec2 describe-instances \
+            --instance-ids $INSTANCE \
+            --query "Reservations[0].Instances[0].State.Name"
