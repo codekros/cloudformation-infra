@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Demo - S3 + EC2
+
+Resources:
+
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0199fa5fada510433
+
+Outputs:
+  BucketName:
+    Value: !Ref MyS3Bucket
+
+  InstanceId:
+    Value: !Ref MyEC2Instance
